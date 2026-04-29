@@ -1,14 +1,11 @@
 {
-  "_comment": "این تغییرات فقط برای جلوگیری از شناسایی خودکار است - بدون تأثیر بر اجرا",
   "version": 2,
   "name": "edge-xhttp-proxy-gateway",
-  "trailingSlash": false,
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/api/index"
     }
   ],
-  "_dummy_field": "obfuscation_layer_2026",
-  "_random_id": "a7f3k9"
+  "trailingSlash": false
 }
