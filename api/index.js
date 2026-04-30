@@ -25,35 +25,38 @@ const EXCLUDED_HEADERS = new Set([
 
 export default async function handler(request) {
   try {
-    const url = new URL(request.url);
-    const destination = TARGET + url.pathname + url.search;
+    const { method, url, headers: reqHeaders, body } = request;
+    const { pathname, search } = new URL(url);
+    const destination = TARGET + pathname + search;
 
-    const headers = new Headers();
+    const forwardHeaders = new Headers();
     let clientIp = null;
 
-    for (const [key, value] of request.headers) {
+    for (const [key, value] of reqHeaders) {
       if (EXCLUDED_HEADERS.has(key)) continue;
       if (key.startsWith("x-vercel-")) continue;
       if (key === "x-real-ip" || key === "x-forwarded-for") {
         clientIp = value;
         continue;
       }
-      headers.set(key, value);
+      forwardHeaders.set(key, value);
     }
 
     if (clientIp) {
-      headers.set("x-forwarded-for", clientIp);
+      forwardHeaders.set("x-forwarded-for", clientIp);
     }
 
-    const isBodyAllowed = request.method !== "GET" && request.method !== "HEAD";
+    const isBodyAllowed = method !== "GET" && method !== "HEAD";
 
-    return await fetch(destination, {
-      method: request.method,
-      headers: headers,
-      body: isBodyAllowed ? request.body : undefined,
+    const fetchOptions = {
+      method,
+      headers: forwardHeaders,
+      body: isBodyAllowed ? body : undefined,
       duplex: "half",
       redirect: "manual",
-    });
+    };
+
+    return await fetch(destination, fetchOptions);
   } catch (err) {
     console.error("Proxy error:", err);
     return new Response("Internal Server Error", { status: 500 });
